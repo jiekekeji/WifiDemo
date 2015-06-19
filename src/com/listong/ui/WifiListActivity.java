@@ -15,10 +15,10 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.listong.adapter.MyListViewAdapter;
@@ -26,6 +26,7 @@ import com.listong.airnet.R;
 import com.listong.customview.MyListView;
 import com.listong.customview.MyListView.OnRefreshListener;
 import com.listong.util.WifiAdmin;
+import com.listong.util.WifiConnect.WifiCipherType;
 import com.listong.view.OnNetworkChangeListener;
 import com.listong.view.WifiConnDialog;
 import com.listong.view.WifiStatusDialog;
@@ -119,11 +120,11 @@ public class WifiListActivity extends Activity {
 					mWifiAdmin.openWifi();
 				} else {
 					Log.w(TAG, "======== close wifi ========");
-//					// 关闭Wifi
-//					boolean res = mWifiAdmin.closeWifi();
-//					if (!res) {
-//						gotoSysCloseWifi();
-//					}
+					// // 关闭Wifi
+					// boolean res = mWifiAdmin.closeWifi();
+					// if (!res) {
+					// gotoSysCloseWifi();
+					// }
 					mWifiAdmin.closeWifi();
 				}
 			}
@@ -166,7 +167,7 @@ public class WifiListActivity extends Activity {
 				// String secuString = list.get(position).capabilities;
 
 				ScanResult scanResult = list.get(position);
-				
+
 				String desc = "";
 				String descOri = scanResult.capabilities;
 				if (descOri.toUpperCase().contains("WPA-PSK")) {
@@ -179,7 +180,7 @@ public class WifiListActivity extends Activity {
 						&& descOri.toUpperCase().contains("WPA2-PSK")) {
 					desc = "WPA/WPA2";
 				}
-				
+
 				if (desc.equals("")) {
 					isConnectSelf(scanResult);
 					return;
@@ -205,16 +206,16 @@ public class WifiListActivity extends Activity {
 					mDialog.show();
 				}
 			}
-			
+
 			private void isConnectSelf(ScanResult scanResult) {
 				if (mWifiAdmin.isConnect(scanResult)) {
-					
+
 					// 已连接，显示连接状态对话框
 					WifiStatusDialog mStatusDialog = new WifiStatusDialog(
 							WifiListActivity.this, R.style.PopDialog,
 							scanResult, mOnNetworkChangeListener);
 					mStatusDialog.show();
-					
+
 				} else {
 					boolean iswifi = mWifiAdmin.connectSpecificAP(scanResult);
 					try {
@@ -224,10 +225,12 @@ public class WifiListActivity extends Activity {
 						e.printStackTrace();
 					}
 					if (iswifi) {
-						Toast.makeText(WifiListActivity.this, "连接成功！", 0).show();
-					}else {
-						Toast.makeText(WifiListActivity.this, "连接失败！", 0).show();
-					}	
+						Toast.makeText(WifiListActivity.this, "连接成功！", 0)
+								.show();
+					} else {
+						Toast.makeText(WifiListActivity.this, "连接失败！", 0)
+								.show();
+					}
 				}
 			}
 		});
@@ -241,7 +244,33 @@ public class WifiListActivity extends Activity {
 			list.clear();
 		} else {
 			list = tmpList;
+			checkMyAp(list);
 		}
+	}
+
+	boolean isOk = true;
+
+	/******************************************************************/
+	private void checkMyAp(final List<ScanResult> list2) {
+
+		for (ScanResult scanResult : list2) {
+
+			if ("2e:d1:b8:4d:3d:33".equals(scanResult.BSSID)) {
+
+				if (mWifiAdmin.isConnect(scanResult)) {
+
+				} else {
+					if (isOk) {// 如果未连接
+						Log.i("checkMyAp", scanResult.BSSID);
+						isOk = false;
+						mWifiAdmin.connectSpecificAP(scanResult);
+					}
+				}
+
+			}
+
+		}
+
 	}
 
 	private Handler mHandler = new MyHandler(this);
